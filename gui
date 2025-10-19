@@ -1,0 +1,76 @@
+local player = game:GetService("Players").LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "KeyValidatorGui"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0.9, 0, 0.4, 0)
+frame.Position = UDim2.new(0.5, 0.5, 0.5, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+
+local inputBox = Instance.new("TextBox", frame)
+inputBox.Size = UDim2.new(1, -20, 0.2, 0)
+inputBox.Position = UDim2.new(0, 10, 0, 10)
+inputBox.PlaceholderText = "Paste your key here"
+inputBox.TextScaled = true
+inputBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+inputBox.TextColor3 = Color3.new(1, 1, 1)
+
+local outputLabel = Instance.new("TextLabel", frame)
+outputLabel.Size = UDim2.new(1, -20, 0.4, 0)
+outputLabel.Position = UDim2.new(0, 10, 0.25, 0)
+outputLabel.Text = "Awaiting input..."
+outputLabel.TextScaled = true
+outputLabel.TextWrapped = true
+outputLabel.BackgroundTransparency = 1
+outputLabel.TextColor3 = Color3.new(1, 1, 1)
+
+local validateButton = Instance.new("TextButton", frame)
+validateButton.Size = UDim2.new(0.5, -15, 0.15, 0)
+validateButton.Position = UDim2.new(0, 10, 0.7, 0)
+validateButton.Text = "Validate Key"
+validateButton.TextScaled = true
+validateButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+validateButton.TextColor3 = Color3.new(1, 1, 1)
+
+local closeButton = Instance.new("TextButton", frame)
+closeButton.Size = UDim2.new(0.5, -15, 0.15, 0)
+closeButton.Position = UDim2.new(0.5, 5, 0.7, 0)
+closeButton.Text = "Close"
+closeButton.TextScaled = true
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+closeButton.TextColor3 = Color3.new(1, 1, 1)
+
+-- 🔗 BindableEvent for external logic
+local event = Instance.new("BindableEvent")
+event.Name = "KeyValidationEvent"
+event.Parent = game:GetService("CoreGui") -- executor-safe
+
+validateButton.MouseButton1Click:Connect(function()
+    local input = inputBox.Text:gsub("[%z\1-\31]", ""):gsub("%s+$", "")
+    if input == "" then
+        outputLabel.Text = "no input"
+    else
+        outputLabel.Text = "Validating..."
+        event:Fire(input)
+    end
+end)
+
+closeButton.MouseButton1Click:Connect(function()
+    gui:Destroy()
+end)
+
+--Example for external logic
+--local event = game:GetService("CoreGui"):WaitForChild("KeyValidationEvent")
+--see? 
+--event.Event:Connect(function(key)
+--   🔐 Your validation logic here
+--    if key == "hunter2" or key == "g00gleSucks" then
+--        print("✅ Key accepted: " .. key)
+        -- You can trigger GUI, teleport, unlock, etc.
+--    else
+--        print("❌ Invalid key: " .. key)
+        -- Optional: feedback GUI or print
+--    end
+--end)
