@@ -1,55 +1,35 @@
--- b64.lua
--- Pure Lua Base64 codec, designed like sha256.lua
+-- b64_test.lua
+-- Standalone tester for the b64 module
 
-local M = {}
+-- Load the b64 module from your repo (use RAW URL!)
+local b64 = loadstring(game:HttpGet(
+    "https://raw.githubusercontent.com/g00glesucksdude-oss/Complicated-key-system/main/b64.lua"
+))()
 
-local chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-local bytes = {}
-for i = 1, #chars do
-    bytes[chars:sub(i,i)] = i-1
-end
+-- Helper to run a single test
+local function run_test(label, input)
+    local encoded = b64.encode(input)
+    local decoded, err = b64.decode(encoded)
 
-function M.encode(data)
-    local result = {}
-    local pad = (3 - (#data % 3)) % 3
-    for i = 1, #data, 3 do
-        local n = (string.byte(data, i) or 0) << 16
-                | (string.byte(data, i+1) or 0) << 8
-                | (string.byte(data, i+2) or 0)
-        for j = 18, 0, -6 do
-            local idx = (n >> j) & 63
-            table.insert(result, chars:sub(idx+1, idx+1))
+    print("["..label.."]")
+    print("  Original:", input)
+    print("  Encoded :", encoded)
+    if not decoded then
+        print("  Decode error:", err)
+    else
+        print("  Decoded :", decoded)
+        if decoded == input then
+            print("  ✅ Round‑trip successful")
+        else
+            print("  ❌ Round‑trip failed")
         end
     end
-    for i = 1, pad do result[#result] = '=' end
-    return table.concat(result)
+    print()
 end
 
-function M.decode(data)
-    data = data:gsub("%s", "")
-    if #data % 4 ~= 0 then return nil, "Invalid length" end
-    local result = {}
-    for i = 1, #data, 4 do
-        local n, pad = 0, 0
-        for j = 0, 3 do
-            local c = data:sub(i+j,i+j)
-            if c == '=' then
-                n = n << 6
-                pad = pad + 1
-            else
-                local val = bytes[c]
-                if not val then return nil, "Invalid character: "..c end
-                n = (n << 6) | val
-            end
-        end
-        for j = 16, 0, -8 do
-            if pad < 3 then
-                table.insert(result, string.char((n >> j) & 255))
-            end
-            pad = pad - 1
-        end
-    end
-    return table.concat(result)
-end
-
-return M
+-- Test cases
+run_test("Simple text", "Hello, Base64 in Lua!")
+run_test("Empty string", "")
+run_test("Symbols", "!@#$%^&*()_+-=[]{};:'\",.<>/?")
+run_test("Unicode", "こんにちは世界")  -- Japanese "Hello, World"
+run_test("Binary data", string.char(0,1,2,3,250,251,252,253,254,255))
